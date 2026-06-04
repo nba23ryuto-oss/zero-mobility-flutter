@@ -1,0 +1,28 @@
+name: zero_mobility_flutter
+description: "ZERO Mobility"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  supabase_flutter: ^2.0.0
+  http: ^1.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/cars/taxi_white.png
+    - assets/images/cars/premium_white.png
+    - assets/images/cars/alphard.png
+    - assets/images/cars/vellfire.png
+    - assets/images/cars/bmw.png
