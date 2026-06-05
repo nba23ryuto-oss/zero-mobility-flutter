@@ -21,18 +21,14 @@ class _LoginScreenState extends State<LoginScreen> {
       await supabase.auth.signInWithPassword(
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text,
-      ).timeout(const Duration(seconds: 15), onTimeout: () {
-        throw Exception('タイムアウト。ネットワーク接続を確認してください。');
-      });
+      ).timeout(const Duration(seconds: 15));
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       }
-    } on AuthException catch (e) {
-      setState(() => _status = e.message);
     } catch (e) {
-      setState(() => _status = e.toString().replaceAll('Exception: ', ''));
+      setState(() => _status = 'ログインに失敗しました。メールとパスワードを確認してください。');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -44,10 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
       await supabase.auth.signUp(
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text,
-      );
+      ).timeout(const Duration(seconds: 15));
       setState(() => _status = 'アカウント作成完了。メールを確認してください。');
-    } on AuthException catch (e) {
-      setState(() => _status = e.message);
+    } catch (e) {
+      setState(() => _status = '登録に失敗しました。');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -58,110 +54,89 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 60),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-                // ロゴ
-                const Text(
-                  'ZERO Mobility',
-                  style: TextStyle(
-                    color: Colors.purple,
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                  ),
+        child: ListView(
+          padding: const EdgeInsets.all(28),
+          children: [
+            const SizedBox(height: 60),
+            const Text(
+              'ZERO Mobility',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.purple, fontSize: 34, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '地方向けタクシーサブスク',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black54, fontSize: 14),
+            ),
+            const SizedBox(height: 48),
+            TextField(
+              controller: _emailCtrl,
+              style: const TextStyle(color: Colors.black87),
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: 'メールアドレス',
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _passCtrl,
+              style: const TextStyle(color: Colors.black87),
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: 'パスワード',
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _loading ? null : _signIn,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                const SizedBox(height: 8),
-                const Text('地方向けタクシーサブスク', style: TextStyle(color: Colors.black54, fontSize: 14)),
-                const SizedBox(height: 48),
-
-                // メール入力
-                TextField(
-                  controller: _emailCtrl,
-                  style: const TextStyle(color: Colors.black87, fontSize: 15),
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: 'メールアドレス',
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
+                child: _loading
+                    ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                    : const Text('ログイン', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 52,
+              child: OutlinedButton(
+                onPressed: _loading ? null : _signUp,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.purple, width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                const SizedBox(height: 12),
-
-                // パスワード入力
-                TextField(
-                  controller: _passCtrl,
-                  style: const TextStyle(color: Colors.black87, fontSize: 15),
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: 'パスワード',
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
+                child: const Text('新規登録', style: TextStyle(color: Colors.purple, fontSize: 16)),
+              ),
+            ),
+            if (_status.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.purple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 24),
-
-                // ログインボタン
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _signIn,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: _loading
-                        ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                        : const Text('ログイン', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // 新規登録ボタン
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: OutlinedButton(
-                    onPressed: _loading ? null : _signUp,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.purple, width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('新規登録', style: TextStyle(color: Colors.purple, fontSize: 16)),
-                  ),
-                ),
-
-                if (_status.isNotEmpty) ...[
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.purple.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(_status, style: const TextStyle(color: Colors.purple), textAlign: TextAlign.center),
-                  ),
-                ],
-              ],
-          ),
+                child: Text(_status, style: const TextStyle(color: Colors.purple), textAlign: TextAlign.center),
+              ),
+            ],
+          ],
         ),
       ),
     );
   }
 }
-
