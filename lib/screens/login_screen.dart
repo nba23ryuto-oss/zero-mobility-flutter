@@ -21,7 +21,9 @@ class _LoginScreenState extends State<LoginScreen> {
       await supabase.auth.signInWithPassword(
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text,
-      );
+      ).timeout(const Duration(seconds: 15), onTimeout: () {
+        throw Exception('タイムアウト。ネットワーク接続を確認してください。');
+      });
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -29,6 +31,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on AuthException catch (e) {
       setState(() => _status = e.message);
+    } catch (e) {
+      setState(() => _status = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -54,10 +58,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 60),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
                 // ロゴ
